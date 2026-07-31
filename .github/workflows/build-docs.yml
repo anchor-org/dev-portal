@@ -1,0 +1,35 @@
+name: Build API docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**.yaml"
+      - "docs/**.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint OpenAPI specs
+        run: |
+          for f in docs/*.yaml docs/*.yml; do
+            [ -e "$f" ] || continue
+            npx --yes @redocly/cli@latest lint "$f"
+          done
+
+      - name: Build static docs site
+        run: npx --yes @redocly/cli@latest build-docs docs/openapi.yaml -o index.html --title "Anchor API"
+
+      - name: Commit rebuilt site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "chore: rebuild docs site from docs/openapi.yaml [skip ci]"
+          git push
