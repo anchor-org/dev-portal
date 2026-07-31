@@ -1,0 +1,26 @@
+name: Lint API docs
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**.yaml"
+      - "docs/**.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/**.yaml"
+      - "docs/**.yml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint OpenAPI specs
+        run: |
+          for f in docs/*.yaml docs/*.yml; do
+            [ -e "$f" ] || continue
+            npx --yes @redocly/cli@latest lint "$f"
+          done
