@@ -1,0 +1,833 @@
+openapi: 3.0.3
+info:
+  title: Anchor API
+  version: "1.0.0"
+  description: |
+    Anchor has no custom backend server — the client talks directly to Supabase.
+    Every endpoint below is the auto-generated Supabase **PostgREST** REST API:
+
+    - **RPC endpoints** (`POST /rpc/{function_name}`) wrap the `public.*` SQL
+      functions defined in `supabase-sql/*.sql`. This is almost all of the
+      write surface and most reads — business logic lives in Postgres, not
+      in the app.
+    - **Table endpoints** (`GET/PATCH /{table}`) are PostgREST's automatic
+      REST mapping over a handful of tables the client queries directly
+      instead of through an RPC. Every table has Row Level Security enabled;
+      what a request can see or change depends on the caller's JWT, not on
+      anything this spec enforces.
+    - **Auth endpoints** (`/auth/v1/*`) are Supabase's standard GoTrue
+      service, used unmodified (sign up, sign in, sign out, session
+      refresh). They're listed for completeness but not fully modeled here —
+      see https://supabase.com/docs/reference/javascript/auth-api.
+
+    ## Known drift between SQL source and live schema
+
+    `supabase-sql/` is a folder of one-shot scripts pasted into the Supabase
+    SQL Editor by hand — there is no migration history, so two functions
+    changed shape more than once across separate files:
+
+    - **`get_my_challenges`**: `supabase-sql/close-challenge.sql` added a
+      `status` column; `supabase-sql/today-grouped.sql` separately
+      drop-and-recreated the same function adding `member_count` (dropping
+      `status` in the process, since `DROP FUNCTION` + `CREATE FUNCTION`
+      resets the column list each time). The TypeScript client
+      (`lib/challenges.ts`) reads **both** `status` and `member_count`, so
+      the function actually deployed today must return both — neither SQL
+      file alone matches production. Confirm the live signature with
+      `\df public.get_my_challenges` before trusting this spec's schema.
+    - **`get_challenge_members_summary`**: same pattern — the version in
+      `supabase-sql/challenge-members-summary.sql` returns only
+      `(user_id, display_name)`; `supabase-sql/challenge-settings.sql`
+      drop-and-recreates it adding `role`. The client reads `role`, so the
+      three-column version is what's documented here, but re-verify live.
+
+    This spec otherwise documents each function's **final** shape (the last
+    file to define it, cross-checked against what `lib/*.ts` actually reads
+    off the response).
+  contact:
+    name: Anchor
+externalDocs:
+  description: Expo SDK 54 docs (client-side reference, not part of this API)
+  url: https://docs.expo.dev/versions/v54.0.0/
+
+servers:
+  - url: "{supabaseUrl}/rest/v1"
+    description: Supabase PostgREST (RPC + table endpoints)
+    variables:
+      supabaseUrl:
+        default: https://YOUR_PROJECT_REF.supabase.co
+        description: Project URL — see EXPO_PUBLIC_SUPABASE_URL
+
+security:
+  - ApiKeyAuth: []
+    BearerAuth: []
+
+tags:
+  - name: Challenges
+    description: Create/manage challenges and their membership
+  - name: Invites
+    description: One-time invite codes to turn a personal challenge into a shared one
+  - name: Tasks
+    description: Daily tasks and their per-challenge link
+  - name: Balance
+    description: Penalty/withdrawal ledger per challenge (balance_transactions)
+  - name: Tables
+    description: Direct PostgREST table access used by the client instead of an RPC
+
+paths:
+  # ============================================================
+  # RPC — Challenges
+  # ============================================================
+  /rpc/create_challenge:
+    post:
+      operationId: create_challenge
+      tags: [Challenges]
+      summary: Create a challenge (create_challenge)
+      description: |
+        Creates the challenge row and the caller's own `challenge_members`
+        ('owner') row atomically. `is_default` and `status` are left to
+        their column defaults.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_title, p_currency]
+              properties:
+                p_title: { type: string }
+                p_currency: { type: string, example: UAH }
+                p_default_penalty: { type: number, nullable: true, default: null }
+                p_payment_confirmation: { type: boolean, default: false }
+      responses:
+        "200":
+          description: The created challenge row
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Challenge" }
+        "400":
+          description: "invalid_title (empty/blank title)"
+        "401":
+          description: not_authenticated
+
+  /rpc/get_my_challenges:
+    post:
+      operationId: get_my_challenges
+      tags: [Challenges]
+      summary: List challenges the caller belongs to (get_my_challenges)
+      description: |
+        No parameters. See the drift note in the top-level description —
+        this spec documents the union of both known field sets
+        (`status` + `member_count`), matching what the client reads.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object, properties: {} }
+      responses:
+        "200":
+          description: Challenges ordered by creation date ascending
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MyChallenge" }
+
+  /rpc/close_challenge:
+    post:
+      operationId: close_challenge
+      tags: [Challenges]
+      summary: Close a challenge (close_challenge)
+      description: Owner-only. Sets `status = 'done'`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "204": { description: Closed }
+        "401": { description: not_authenticated }
+        "404": { description: not_authorized_or_not_found }
+
+  /rpc/reopen_challenge:
+    post:
+      operationId: reopen_challenge
+      tags: [Challenges]
+      summary: Reopen a closed challenge (reopen_challenge)
+      description: Owner-only. Sets `status = 'active'`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "204": { description: Reopened }
+        "401": { description: not_authenticated }
+        "404": { description: not_authorized_or_not_found }
+
+  /rpc/update_challenge:
+    post:
+      operationId: update_challenge
+      tags: [Challenges]
+      summary: Edit challenge settings (update_challenge)
+      description: |
+        Owner-only. Deliberately excludes `payment_confirmation` (locked
+        after creation) and `day_close_hour` (column doesn't exist yet).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id, p_title, p_currency, p_default_penalty]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+                p_title: { type: string }
+                p_currency: { type: string }
+                p_default_penalty: { type: number, nullable: true }
+      responses:
+        "204": { description: Updated }
+        "400": { description: invalid_title }
+        "401": { description: not_authenticated }
+        "404": { description: not_authorized_or_not_found }
+
+  /rpc/leave_challenge:
+    post:
+      operationId: leave_challenge
+      tags: [Challenges]
+      summary: Leave a challenge (leave_challenge)
+      description: Member-only — an owner calling this hits `not_authorized_or_not_found` (can't leave your own challenge).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "204": { description: Left the challenge }
+        "401": { description: not_authenticated }
+        "404": { description: not_authorized_or_not_found }
+
+  /rpc/get_challenge_members_summary:
+    post:
+      operationId: get_challenge_members_summary
+      tags: [Challenges]
+      summary: List a challenge's members (get_challenge_members_summary)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Members ordered by join date ascending. Empty array for non-members (RLS-equivalent guard inside the function).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id: { type: string, format: uuid }
+                    display_name: { type: string }
+                    role: { type: string, enum: [owner, member] }
+
+  # ============================================================
+  # RPC — Invites
+  # ============================================================
+  /rpc/create_challenge_invite:
+    post:
+      operationId: create_challenge_invite
+      tags: [Invites]
+      summary: Mint a one-time invite code (create_challenge_invite)
+      description: Owner-only. Code is single-use, expires in 7 days.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The generated code
+          content:
+            application/json:
+              schema: { type: string, example: "8K3H9QRT2M" }
+        "403": { description: not_authorized }
+
+  /rpc/accept_challenge_invite:
+    post:
+      operationId: accept_challenge_invite
+      tags: [Invites]
+      summary: Redeem an invite code (accept_challenge_invite)
+      description: |
+        Every failure case (not found, revoked, expired, exhausted) returns
+        the same generic `invalid_or_expired_invite` error — no signal
+        leaks about which reason applied.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_code]
+              properties:
+                p_code: { type: string, example: "8K3H9QRT2M" }
+      responses:
+        "200":
+          description: Result of redeeming the code
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    challenge_id: { type: string, format: uuid }
+                    challenge_title: { type: string }
+                    already_member: { type: boolean }
+        "401": { description: not_authenticated }
+        "400": { description: invalid_or_expired_invite }
+
+  # ============================================================
+  # RPC — Tasks
+  # ============================================================
+  /rpc/get_today_tasks:
+    post:
+      operationId: get_today_tasks
+      tags: [Tasks]
+      summary: Caller's tasks for a given date (get_today_tasks)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_date]
+              properties:
+                p_date: { type: string, format: date }
+      responses:
+        "200":
+          description: Own tasks for the date, each joined with its linked challenge
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TodayTask" }
+
+  /rpc/create_task_with_challenge_link:
+    post:
+      operationId: create_task_with_challenge_link
+      tags: [Tasks]
+      summary: Create a task linked to a challenge (create_task_with_challenge_link)
+      description: Atomic — inserts `tasks` + `challenge_tasks` in one transaction.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_title, p_penalty_amount, p_scheduled_date, p_challenge_id]
+              properties:
+                p_title: { type: string }
+                p_penalty_amount: { type: number }
+                p_scheduled_date: { type: string, format: date }
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The created task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "401": { description: not_authenticated }
+
+  /rpc/update_task:
+    post:
+      operationId: update_task
+      tags: [Tasks]
+      summary: Edit a task's title/penalty (update_task)
+      description: |
+        Title can always change. `penalty_amount` can only change within
+        6 hours of the task's `created_at` — enforced only when the amount
+        actually differs from the current value.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_task_id, p_title, p_penalty_amount]
+              properties:
+                p_task_id: { type: string, format: uuid }
+                p_title: { type: string }
+                p_penalty_amount: { type: number }
+      responses:
+        "200":
+          description: The updated task
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "401": { description: not_authenticated }
+        "403": { description: "penalty_amount_locked (past the 6-hour window)" }
+        "404": { description: task_not_found_or_forbidden }
+
+  /rpc/delete_task:
+    post:
+      operationId: delete_task
+      tags: [Tasks]
+      summary: Delete a task (delete_task)
+      description: Only within 6 hours of `created_at`; removes the `challenge_tasks` link first.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_task_id]
+              properties:
+                p_task_id: { type: string, format: uuid }
+      responses:
+        "204": { description: Deleted }
+        "401": { description: not_authenticated }
+        "403": { description: task_too_old_to_delete }
+        "404": { description: task_not_found_or_forbidden }
+
+  /rpc/get_challenge_task_journal:
+    post:
+      operationId: get_challenge_task_journal
+      tags: [Tasks]
+      summary: Every member's tasks for a challenge (get_challenge_task_journal)
+      description: |
+        Rows are gated to `scheduled_date >= caller's own joined_at` — a
+        member who joined later never sees older history. Capped at 200 rows.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Journal entries, newest scheduled date first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/JournalEntry" }
+
+  # ============================================================
+  # RPC — Balance
+  # ============================================================
+  /rpc/get_challenge_balance:
+    post:
+      operationId: get_challenge_balance
+      tags: [Balance]
+      summary: Current balance for a challenge (get_challenge_balance)
+      description: "Sum of confirmed penalties minus withdrawals. SECURITY INVOKER — a non-member simply sums zero rows under RLS."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Balance amount
+          content:
+            application/json:
+              schema: { type: number }
+
+  /rpc/get_challenge_pending_total:
+    post:
+      operationId: get_challenge_pending_total
+      tags: [Balance]
+      summary: Sum of pending (unconfirmed) penalties for a challenge (get_challenge_pending_total)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Pending total
+          content:
+            application/json:
+              schema: { type: number }
+
+  /rpc/get_my_pending_total:
+    post:
+      operationId: get_my_pending_total
+      tags: [Balance]
+      summary: Sum of the caller's own pending penalties across all challenges (get_my_pending_total)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object, properties: {} }
+      responses:
+        "200":
+          description: Pending total across every challenge
+          content:
+            application/json:
+              schema: { type: number }
+
+  /rpc/confirm_penalty_transaction:
+    post:
+      operationId: confirm_penalty_transaction
+      tags: [Balance]
+      summary: Confirm one of the caller's own pending penalties (confirm_penalty_transaction)
+      description: "Debtor-only: `user_id = auth.uid()` is the actual authorization check, not just a filter."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_transaction_id]
+              properties:
+                p_transaction_id: { type: string, format: uuid }
+      responses:
+        "204": { description: Confirmed }
+        "401": { description: not_authenticated }
+        "404": { description: transaction_not_found_or_not_pending }
+
+  /rpc/confirm_my_pending:
+    post:
+      operationId: confirm_my_pending
+      tags: [Balance]
+      summary: Bulk-confirm all of the caller's own pending penalties for a challenge (confirm_my_pending)
+      description: No-op (not an error) if nothing is pending.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "204": { description: Confirmed (or no-op) }
+        "401": { description: not_authenticated }
+
+  /rpc/get_challenge_member_balances:
+    post:
+      operationId: get_challenge_member_balances
+      tags: [Balance]
+      summary: Per-member confirmed + pending totals for a challenge (get_challenge_member_balances)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: One row per member, ordered by join date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id: { type: string, format: uuid }
+                    display_name: { type: string }
+                    confirmed: { type: number }
+                    pending: { type: number }
+
+  /rpc/withdraw_from_balance:
+    post:
+      operationId: withdraw_from_balance
+      tags: [Balance]
+      summary: Spend from the challenge balance (withdraw_from_balance)
+      description: Any member may withdraw. No floor guard — balance can go negative.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id, p_amount]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+                p_amount: { type: number, minimum: 0, exclusiveMinimum: true }
+                p_note: { type: string, nullable: true, default: null }
+      responses:
+        "204": { description: Withdrawal recorded }
+        "401": { description: not_authenticated }
+        "403": { description: not_authorized }
+        "400": { description: invalid_amount }
+
+  # ============================================================
+  # Tables — direct PostgREST access (no RPC wrapper)
+  # ============================================================
+  /challenges:
+    get:
+      operationId: getChallengeFields
+      tags: [Tables]
+      summary: Read challenge fields directly
+      description: |
+        Used by the client for single-row reads (challenge settings, current
+        currency, the legacy `is_default` lookup) instead of a dedicated RPC.
+        RLS restricts visibility to challenges the caller is a member of.
+      parameters:
+        - name: select
+          in: query
+          schema: { type: string }
+          example: "title,currency,default_penalty,status,payment_confirmation"
+        - name: id
+          in: query
+          schema: { type: string }
+          example: "eq.9b1d...uuid"
+        - name: owner_id
+          in: query
+          schema: { type: string }
+        - name: is_default
+          in: query
+          schema: { type: string }
+          example: "eq.true"
+      responses:
+        "200":
+          description: Matching challenge row(s)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Challenge" }
+
+  /tasks:
+    get:
+      operationId: listRecentTaskTitles
+      tags: [Tables]
+      summary: Read task fields directly
+      description: Used to list the caller's recent task titles for autocomplete.
+      parameters:
+        - name: select
+          in: query
+          schema: { type: string }
+          example: title
+        - name: user_id
+          in: query
+          schema: { type: string }
+          example: "eq.9b1d...uuid"
+        - name: order
+          in: query
+          schema: { type: string }
+          example: "created_at.desc"
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Matching task row(s)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Task" }
+    patch:
+      operationId: updateTaskStatus
+      tags: [Tables]
+      summary: Mark a task done/pending directly
+      description: |
+        RLS permits a user to update their own tasks directly, so
+        `setTaskDone` bypasses the RPC layer for this single toggle.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: "eq.9b1d...uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [pending, done, missed] }
+                completed_at: { type: string, format: date-time, nullable: true }
+      responses:
+        "204": { description: Updated }
+
+  /balance_transactions:
+    get:
+      operationId: listBalanceTransactions
+      tags: [Tables]
+      summary: Read the full transaction ledger for a challenge
+      description: |
+        Powers the balance-history list. RLS
+        (`members_can_view_balance_transactions`) scopes rows to challenge
+        members, and further to `date >= caller's own joined_at`.
+      parameters:
+        - name: select
+          in: query
+          schema: { type: string }
+          example: "*"
+        - name: challenge_id
+          in: query
+          required: true
+          schema: { type: string }
+          example: "eq.9b1d...uuid"
+        - name: order
+          in: query
+          schema: { type: string }
+          example: "date.desc,created_at.desc"
+      responses:
+        "200":
+          description: Matching transaction row(s)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BalanceTransaction" }
+
+  /users:
+    get:
+      operationId: getUserFields
+      tags: [Tables]
+      summary: Read the caller's own default penalty
+      description: Used once, on the Today screen, to prefill a new task's penalty amount.
+      parameters:
+        - name: select
+          in: query
+          schema: { type: string }
+          example: default_penalty
+        - name: id
+          in: query
+          schema: { type: string }
+          example: "eq.9b1d...uuid"
+      responses:
+        "200":
+          description: Matching user row(s)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase anon key (EXPO_PUBLIC_SUPABASE_ANON_KEY)
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: End-user access token from Supabase Auth; RLS evaluates `auth.uid()` from this.
+
+  schemas:
+    Challenge:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        owner_id: { type: string, format: uuid }
+        title: { type: string }
+        is_default: { type: boolean, deprecated: true, description: "Slated for removal — see REQUIREMENTS.md" }
+        status: { type: string, enum: [active, done] }
+        currency: { type: string, example: UAH }
+        payment_confirmation: { type: boolean }
+        default_penalty: { type: number, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    MyChallenge:
+      type: object
+      description: Shape returned by get_my_challenges — see the drift note in the top-level description.
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        currency: { type: string }
+        default_penalty: { type: number, nullable: true }
+        member_count: { type: integer }
+        status: { type: string, enum: [active, done] }
+
+    Task:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        title: { type: string }
+        penalty_amount: { type: number }
+        scheduled_date: { type: string, format: date }
+        status: { type: string, enum: [pending, done, missed] }
+        completed_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    TodayTask:
+      allOf:
+        - $ref: "#/components/schemas/Task"
+        - type: object
+          properties:
+            challenge_id: { type: string, format: uuid }
+            challenge_title: { type: string }
+
+    JournalEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        display_name: { type: string }
+        title: { type: string }
+        penalty_amount: { type: number }
+        scheduled_date: { type: string, format: date }
+        status: { type: string, enum: [pending, done, missed] }
+        completed_at: { type: string, format: date-time, nullable: true }
+
+    BalanceTransaction:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        challenge_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        type: { type: string, enum: [penalty, withdrawal] }
+        amount: { type: number }
+        status: { type: string, enum: [pending, confirmed] }
+        note: { type: string, nullable: true }
+        date: { type: string, format: date }
+        created_at: { type: string, format: date-time }
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        display_name: { type: string }
+        locale: { type: string }
+        theme: { type: string }
+        default_penalty: { type: number, nullable: true }
+        currency: { type: string }
