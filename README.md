@@ -1,32 +1,32 @@
 # dev-portal
 
-Внутрішня документація API проєкту Anchor. Тут живуть OpenAPI-специфікації всіх апішок і статичний сайт, згенерований з них.
+Internal API documentation for the Anchor project. This is where OpenAPI specs for all of the project's APIs live, along with a static site generated from them.
 
-## Структура
+## Structure
 
-- `docs/openapi.yaml` — специфікація Anchor API (Supabase PostgREST: RPC + табличні ендпоінти). Джерело істини.
-- `index.html` — статичний сайт документації (Redoc), автоматично перегенеровується з `docs/openapi.yaml` при кожному push у `main` (див. `.github/workflows/build-docs.yml`). **Не редагувати вручну** — зміни буде перезаписано.
+- `docs/openapi.yaml` — the Anchor API spec (Supabase PostgREST: RPC + table endpoints). Source of truth.
+- `index.html` — the static docs site (Redoc), automatically rebuilt from `docs/openapi.yaml` on every push to `main` (see `.github/workflows/build-docs.yml`). **Do not edit by hand** — changes will be overwritten.
 
-## Локальний перегляд
+## Local preview
 
 ```bash
 npx @redocly/cli preview-docs docs/openapi.yaml
 ```
 
-## Додати документацію для нової апішки
+## Adding docs for a new API
 
-1. Покласти новий `docs/<назва>.yaml` (OpenAPI 3.0).
-2. Перевірити: `npx @redocly/cli lint docs/<назва>.yaml`.
-3. Якщо апішок стає декілька — оновити `build-docs.yml`, щоб генерував окремі сторінки або об'єднаний спек.
+1. Add a new `docs/<name>.yaml` (OpenAPI 3.0).
+2. Validate it: `npx @redocly/cli lint docs/<name>.yaml`.
+3. If there end up being multiple APIs, update `build-docs.yml` to generate separate pages or a combined spec.
 
-## Хостинг
+## Hosting
 
-Репозиторій приватний — GitHub Pages для приватних репо недоступний на Free-плані anchor-org, тому сайт хоститься на **Vercel** (підключення репозиторію — окремий крок в браузері, див. нижче).
+This repo is private — GitHub Pages isn't available for private repos on anchor-org's Free plan, so the site is hosted on **Vercel** instead (connecting the repo is a one-time step done in the browser, see below).
 
-### Підключити Vercel (один раз)
+### Connect Vercel (one-time)
 
 1. https://vercel.com/new
-2. Import Git Repository → авторизувати Vercel GitHub App для `anchor-org` (якщо ще не зроблено)
-3. Обрати `dev-portal` → Deploy (без додаткових налаштувань — це статичний сайт, `index.html` в корені)
+2. Import Git Repository → authorize the Vercel GitHub App for `anchor-org` (if not already done)
+3. Select `dev-portal` → Deploy (no extra config needed — it's a static site, `index.html` at the root)
 
-Після підключення кожен push у `main` (включно з авто-коммітами з `build-docs.yml`) автоматично передеплоїть сайт.
+Once connected, every push to `main` (including the auto-commits from `build-docs.yml`) automatically redeploys the site.
