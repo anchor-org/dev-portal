@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npm run build && mkdir -p dist && cp index.html favicon.png dist/",
+  "outputDirectory": "dist"
+}

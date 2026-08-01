@@ -25,8 +25,14 @@ jobs:
         with:
           token: ${{ secrets.DEV_PORTAL_ACCESS_TOKEN }}
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
       - name: Build static docs site
-        run: npx --yes @redocly/cli@latest build-docs docs/openapi.yaml -o index.html --title "Anchor API"
+        run: npm run build
 
       - name: Open PR with rebuilt site
         uses: peter-evans/create-pull-request@v6

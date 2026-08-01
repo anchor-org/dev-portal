@@ -6,6 +6,7 @@ Internal API documentation for the Anchor project. This is where OpenAPI specs f
 
 - `docs/openapi.yaml` — the Anchor API spec (Supabase PostgREST: RPC + table endpoints). Source of truth.
 - `index.html` — the static docs site (Redoc), automatically rebuilt from `docs/openapi.yaml` whenever a PR touching it merges into `main` (see `.github/workflows/build-docs.yml` — it opens its own PR with the rebuilt file, since direct pushes to `main` are blocked). **Do not edit by hand** — changes will be overwritten.
+- `favicon.png` — Anchor's actual app icon (copied from `anchor/assets/icon.png`), injected into `index.html`'s `<head>` by `scripts/inject-favicon.mjs` as part of `npm run build`.
 - `tests/` — unit + integration tests for the spec, one folder per API domain/tag (see Testing below).
 
 ## Local preview
@@ -13,6 +14,8 @@ Internal API documentation for the Anchor project. This is where OpenAPI specs f
 ```bash
 npx @redocly/cli preview-docs docs/openapi.yaml
 ```
+
+(Live-reload preview straight from the spec — doesn't go through `npm run build`, so no favicon here. For the actual static site, build it — see Testing below.)
 
 ## Adding docs for a new API
 
@@ -44,7 +47,7 @@ Run locally (assumes `anchor` is checked out as a sibling directory, e.g. `~/anc
 
 ```bash
 npm install
-npx @redocly/cli build-docs docs/openapi.yaml -o index.html --title "Anchor API"  # tests/spec checks this is fresh
+npm run build  # tests/spec checks index.html is fresh
 npm test
 # or, if anchor isn't a sibling directory:
 ANCHOR_REPO_PATH=/path/to/anchor npm test
