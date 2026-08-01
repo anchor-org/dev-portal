@@ -487,6 +487,31 @@ paths:
             application/json:
               schema: { type: number }
 
+  /rpc/get_my_challenge_pending_total:
+    post:
+      operationId: get_my_challenge_pending_total
+      tags: [Balance]
+      summary: Sum of the caller's own pending penalties within one challenge (get_my_challenge_pending_total)
+      description: |
+        Like `get_my_pending_total`, but scoped to a single challenge instead
+        of summed across all of them — `user_id = auth.uid()` is the actual
+        authorization check, not just a filter.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The caller's pending total for this challenge
+          content:
+            application/json:
+              schema: { type: number }
+
   /rpc/get_my_pending_total:
     post:
       operationId: get_my_pending_total
