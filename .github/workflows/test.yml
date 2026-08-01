@@ -29,7 +29,14 @@ jobs:
       - name: Rebuild index.html for the drift check
         run: npx --yes @redocly/cli@latest build-docs docs/openapi.yaml -o index.html --title "Anchor API"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install test dependencies
+        run: npm ci
+
       - name: Run tests
         env:
           ANCHOR_REPO_PATH: ${{ github.workspace }}/anchor
-        run: python3 tests/test_openapi.py
+        run: npm test

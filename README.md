@@ -6,7 +6,7 @@ Internal API documentation for the Anchor project. This is where OpenAPI specs f
 
 - `docs/openapi.yaml` — the Anchor API spec (Supabase PostgREST: RPC + table endpoints). Source of truth.
 - `index.html` — the static docs site (Redoc), automatically rebuilt from `docs/openapi.yaml` whenever a PR touching it merges into `main` (see `.github/workflows/build-docs.yml` — it opens its own PR with the rebuilt file, since direct pushes to `main` are blocked). **Do not edit by hand** — changes will be overwritten.
-- `tests/test_openapi.py` — unit + integration tests for the spec (see Testing below).
+- `tests/` — unit + integration tests for the spec, one folder per API domain/tag (see Testing below).
 
 ## Local preview
 
@@ -22,20 +22,40 @@ npx @redocly/cli preview-docs docs/openapi.yaml
 
 ## Testing
 
-`tests/test_openapi.py` runs two kinds of checks:
+TypeScript + [Vitest](https://vitest.dev). Structure:
 
-- **Unit** — the spec is internally consistent (valid OpenAPI, unique operationIds, `$ref`s resolve, response schemas present, etc). No external dependencies.
-- **Integration** — the spec matches reality: every documented RPC has a matching SQL function, every RPC/table the client actually calls is documented, request params and response fields match what `lib/*.ts` in the `anchor` repo sends/reads. Needs the `anchor` repo checked out somewhere on disk.
+```
+tests/
+  helpers/       shared bundling/fixture/assertion logic — not test files themselves
+  spec/          spec-wide checks that don't belong to one API domain
+                 (metadata, operationId uniqueness, schemas, generated site, cross-domain completeness)
+  challenges/    unit.spec.ts + integration.spec.ts, one pair per tag in openapi.yaml
+  invites/
+  tasks/
+  balance/
+  auth/
+  tables/
+```
+
+Each domain folder mirrors a tag in `docs/openapi.yaml`. `unit.spec.ts` checks that domain's operations are internally well-formed (summary, operationId, responses, tags — no external dependencies). `integration.spec.ts` checks the spec against reality: every documented RPC has a matching SQL function, request params and response fields match what `lib/*.ts` in the `anchor` repo actually sends/reads. Needs the `anchor` repo checked out somewhere on disk.
 
 Run locally (assumes `anchor` is checked out as a sibling directory, e.g. `~/anchor` next to `~/dev-portal` — otherwise set `ANCHOR_REPO_PATH`):
 
 ```bash
-python3 tests/test_openapi.py
+npm install
+npx @redocly/cli build-docs docs/openapi.yaml -o index.html --title "Anchor API"  # tests/spec checks this is fresh
+npm test
 # or, if anchor isn't a sibling directory:
-ANCHOR_REPO_PATH=/path/to/anchor python3 tests/test_openapi.py
+ANCHOR_REPO_PATH=/path/to/anchor npm test
 ```
 
-Runs automatically on every PR that touches `docs/**.yaml` or `tests/**` (`.github/workflows/test.yml`). The integration checks need a `ANCHOR_REPO_TOKEN` repo secret — a GitHub Personal Access Token with read access to the private `anchor-org/anchor` repo (Settings → Secrets and variables → Actions → New repository secret). Without it, that CI job fails clearly rather than silently skipping, as a reminder it isn't wired up yet.
+Runs automatically on every PR that touches `docs/**.yaml` or `tests/**` (`.github/workflows/test.yml`). The integration checks need an `ANCHOR_REPO_TOKEN` repo secret — a GitHub Personal Access Token with read access to the private `anchor-org/anchor` repo (Settings → Secrets and variables → Actions → New repository secret). Without it, that CI job fails clearly rather than silently skipping, as a reminder it isn't wired up yet.
+
+### Adding tests for a new domain
+
+1. Add the tag to `docs/openapi.yaml` and tag your new operations with it.
+2. `mkdir tests/<domain>`, add `unit.spec.ts` calling `describeOperationChecks(opsForTag('YourTag'), declaredTags)`.
+3. If it's RPC-backed, add `integration.spec.ts` calling `describeRpcIntegrationChecks({ ops: opsForTag('YourTag'), sqlFnNames, clientText, schemas })` (see `tests/helpers/`). If it needs different logic (like `tables/` and `auth/` do), write it directly in that file instead.
 
 ## Hosting
 
