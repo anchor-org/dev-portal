@@ -3,10 +3,11 @@ name: Test API docs
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "docs/**.yaml"
-      - "docs/**.yml"
-      - "tests/**"
+    # No paths filter here on purpose — same reasoning as lint.yml. This
+    # is a required status check now, so it has to run on every PR
+    # (including build-docs.yml's own index.html-only PR) or a PR that
+    # doesn't touch these paths gets stuck waiting on a check that never
+    # reports.
   workflow_dispatch: {}
 
 jobs:
