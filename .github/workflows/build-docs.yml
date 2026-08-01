@@ -15,7 +15,14 @@ jobs:
   rebuild:
     runs-on: ubuntu-latest
     steps:
+      # Checked out with a real PAT, not the default GITHUB_TOKEN — GitHub
+      # deliberately doesn't let GITHUB_TOKEN-authored pushes/PRs trigger
+      # other workflows (anti-recursion guard), which meant `lint`/`test`
+      # never ran on this bot's own PR. A PAT doesn't have that
+      # restriction, so pull_request-triggered workflows fire normally.
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.DEV_PORTAL_ACCESS_TOKEN }}
 
       - name: Build static docs site
         run: npx --yes @redocly/cli@latest build-docs docs/openapi.yaml -o index.html --title "Anchor API"
@@ -23,6 +30,7 @@ jobs:
       - name: Open PR with rebuilt site
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.DEV_PORTAL_ACCESS_TOKEN }}
           commit-message: "chore: rebuild docs site from docs/openapi.yaml"
           branch: bot/rebuild-docs
           delete-branch: true
