@@ -12,12 +12,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      ANCHOR_TOKEN_SET: ${{ secrets.ANCHOR_REPO_TOKEN != '' }}
     steps:
       - name: Checkout dev-portal
         uses: actions/checkout@v4
 
       - name: Checkout anchor (for integration checks)
-        if: ${{ secrets.ANCHOR_REPO_TOKEN != '' }}
+        if: ${{ env.ANCHOR_TOKEN_SET == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: anchor-org/anchor
