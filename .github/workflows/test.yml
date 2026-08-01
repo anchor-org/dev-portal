@@ -27,15 +27,15 @@ jobs:
           token: ${{ secrets.ANCHOR_REPO_TOKEN }}
           path: anchor
 
-      - name: Rebuild index.html for the drift check
-        run: npx --yes @redocly/cli@latest build-docs docs/openapi.yaml -o index.html --title "Anchor API"
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Install test dependencies
         run: npm ci
+
+      - name: Rebuild index.html for the drift check
+        run: npm run build
 
       - name: Run tests
         env:
