@@ -19,6 +19,7 @@ npx @redocly/cli preview-docs docs/openapi.yaml
 1. Add a new `docs/<name>.yaml` (OpenAPI 3.0).
 2. Validate it: `npx @redocly/cli lint docs/<name>.yaml`.
 3. If there end up being multiple APIs, update `build-docs.yml` to generate separate pages or a combined spec.
+4. Add tests for it too — see "Adding tests for a new domain" under Testing below.
 
 ## Testing
 
