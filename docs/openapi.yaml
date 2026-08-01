@@ -15,10 +15,13 @@ info:
       instead of through an RPC. Every table has Row Level Security enabled;
       what a request can see or change depends on the caller's JWT, not on
       anything this spec enforces.
-    - **Auth endpoints** (`/auth/v1/*`) are Supabase's standard GoTrue
-      service, used unmodified (sign up, sign in, sign out, session
-      refresh). They're listed for completeness but not fully modeled here —
-      see https://supabase.com/docs/reference/javascript/auth-api.
+    - **Auth endpoints** (`/auth/v1/*`, note the different base path from
+      the two above) are Supabase's standard GoTrue service, used
+      unmodified. Only what the app actually calls is modeled here — sign
+      up, password sign-in/refresh, sign out. Anything else GoTrue offers
+      (password reset, OAuth providers, MFA) isn't used by this app and
+      isn't documented here — see
+      https://supabase.com/docs/reference/javascript/auth-api.
 
     ## Known drift between SQL source and live schema
 
@@ -71,6 +74,8 @@ tags:
     description: Daily tasks and their per-challenge link
   - name: Balance
     description: Penalty/withdrawal ledger per challenge (balance_transactions)
+  - name: Auth
+    description: Supabase GoTrue — sign up, sign in, sign out. Different base path from everything else (`/auth/v1`, not `/rest/v1`).
   - name: Tables
     description: Direct PostgREST table access used by the client instead of an RPC
 
@@ -591,6 +596,133 @@ paths:
         "400": { description: invalid_amount }
 
   # ============================================================
+  # Auth — Supabase GoTrue (base path is /auth/v1, not /rest/v1 —
+  # see the per-operation `servers` override on each one below)
+  # ============================================================
+  /auth/v1/signup:
+    post:
+      operationId: authSignUp
+      tags: [Auth]
+      summary: Register a new account
+      description: |
+        Used by `supabase.auth.signUp()` (`app/register.tsx` in the anchor
+        repo). `data.display_name` lands in the new user's `user_metadata`;
+        turning that into a `public.users` row happens via a database
+        trigger not covered by this spec.
+      servers:
+        - url: "{supabaseUrl}/auth/v1"
+          variables:
+            supabaseUrl:
+              default: https://YOUR_PROJECT_REF.supabase.co
+              description: Project URL — see EXPO_PUBLIC_SUPABASE_URL
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password:
+                  type: string
+                  description: App enforces a 6-character minimum client-side before calling this.
+                data:
+                  type: object
+                  properties:
+                    display_name: { type: string }
+                redirect_to:
+                  type: string
+                  format: uri
+                  description: Sent as `emailRedirectTo` — where the confirmation email's link lands.
+      responses:
+        "200":
+          description: |
+            Shape depends on whether the project requires email
+            confirmation: if `session` is `null`, the app shows "check your
+            email" instead of signing the user in immediately
+            (`app/register.tsx`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/AuthUser" }
+                  session:
+                    type: object
+                    nullable: true
+                    allOf:
+                      - $ref: "#/components/schemas/AuthSession"
+        "422":
+          description: "user_already_exists / email_exists / weak_password / validation_failed / email_address_invalid (see lib/auth-errors.ts)"
+        "429":
+          description: over_email_send_rate_limit
+
+  /auth/v1/token:
+    post:
+      operationId: authToken
+      tags: [Auth]
+      summary: Sign in with password, or refresh a session
+      description: |
+        One endpoint, two grant types via the `grant_type` query param:
+        - `password` — `supabase.auth.signInWithPassword()`
+          (`app/sign-in.tsx`).
+        - `refresh_token` — fired automatically by the SDK
+          (`autoRefreshToken: true` in `lib/supabase.ts`) to renew an
+          expiring session; the app never calls this directly itself.
+      servers:
+        - url: "{supabaseUrl}/auth/v1"
+          variables:
+            supabaseUrl:
+              default: https://YOUR_PROJECT_REF.supabase.co
+              description: Project URL — see EXPO_PUBLIC_SUPABASE_URL
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: grant_type
+          in: query
+          required: true
+          schema: { type: string, enum: [password, refresh_token] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/PasswordGrant"
+                - $ref: "#/components/schemas/RefreshGrant"
+      responses:
+        "200":
+          description: New session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400":
+          description: "invalid_credentials / email_not_confirmed (see lib/auth-errors.ts)"
+        "429":
+          description: over_request_rate_limit
+
+  /auth/v1/logout:
+    post:
+      operationId: authLogout
+      tags: [Auth]
+      summary: Sign out (revoke the current session)
+      description: Used by `supabase.auth.signOut()` (`app/(tabs)/settings.tsx`).
+      servers:
+        - url: "{supabaseUrl}/auth/v1"
+          variables:
+            supabaseUrl:
+              default: https://YOUR_PROJECT_REF.supabase.co
+              description: Project URL — see EXPO_PUBLIC_SUPABASE_URL
+      security:
+        - ApiKeyAuth: []
+          BearerAuth: []
+      responses:
+        "204": { description: Signed out }
+
+  # ============================================================
   # Tables — direct PostgREST access (no RPC wrapper)
   # ============================================================
   /challenges:
@@ -831,3 +963,37 @@ components:
         theme: { type: string }
         default_penalty: { type: number, nullable: true }
         currency: { type: string }
+
+    PasswordGrant:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    RefreshGrant:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+
+    AuthUser:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        user_metadata:
+          type: object
+          properties:
+            display_name: { type: string }
+        created_at: { type: string, format: date-time }
+
+    AuthSession:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, example: bearer }
+        expires_in: { type: integer, description: Seconds until access_token expires }
+        expires_at: { type: integer, description: Unix timestamp }
+        user: { $ref: "#/components/schemas/AuthUser" }
