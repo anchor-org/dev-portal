@@ -3,9 +3,11 @@ name: Lint API docs
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "docs/**.yaml"
-      - "docs/**.yml"
+    # No paths filter here on purpose — this is a required status check.
+    # A path-filtered trigger simply never fires on a PR that doesn't touch
+    # those paths (e.g. build-docs.yml's own index.html-only PR), and a
+    # required check that never reports blocks merging forever. Runs fast
+    # (a few seconds) so running it unconditionally costs nothing.
   push:
     branches: [main]
     paths:
