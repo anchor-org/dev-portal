@@ -1,0 +1,33 @@
+name: Test API docs
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**.yaml"
+      - "docs/**.yml"
+      - "tests/**"
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev-portal
+        uses: actions/checkout@v4
+
+      - name: Checkout anchor (for integration checks)
+        if: ${{ secrets.ANCHOR_REPO_TOKEN != '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: anchor-org/anchor
+          token: ${{ secrets.ANCHOR_REPO_TOKEN }}
+          path: anchor
+
+      - name: Rebuild index.html for the drift check
+        run: npx --yes @redocly/cli@latest build-docs docs/openapi.yaml -o index.html --title "Anchor API"
+
+      - name: Run tests
+        env:
+          ANCHOR_REPO_PATH: ${{ github.workspace }}/anchor
+        run: python3 tests/test_openapi.py
