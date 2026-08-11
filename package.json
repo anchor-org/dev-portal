@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "redocly build-docs docs/openapi.yaml -o index.html --title \"Anchor API\" && node scripts/inject-favicon.mjs",
+    "build": "redocly build-docs docs/openapi.yaml -o index.html --title \"Anchor API\" && node scripts/inject-favicon.mjs && node scripts/inject-theme.mjs",
     "test": "vitest run"
   },
   "devDependencies": {

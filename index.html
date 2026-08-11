@@ -430,9 +430,186 @@ data-styled.g138[id="sc-cKZGmI"]{content:"gyVKdy,"}/*!sc*/
 data-styled.g139[id="sc-iIEXPp"]{content:"eIwqum,"}/*!sc*/
 </style>
   <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+<script id="anchor-theme-preload">
+    (() => {
+      const storageKey = 'anchor-theme';
+      let theme;
+
+      try {
+        theme = window.localStorage.getItem(storageKey);
+      } catch {
+        // Local storage may be disabled; fall back to the system preference.
+      }
+
+      if (theme !== 'light' && theme !== 'dark') {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      document.documentElement.dataset.anchorTheme = theme;
+    })();
+  </script>
+<style id="anchor-theme-styles">
+    :root[data-anchor-theme='light'] {
+      color-scheme: light;
+    }
+
+    :root[data-anchor-theme='dark'] {
+      color-scheme: dark;
+    }
+
+    #anchor-theme-toggle {
+      position: fixed;
+      top: 14px;
+      right: 18px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border: 1px solid #c8d0d5;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      color: #263238;
+      box-shadow: 0 2px 8px rgba(38, 50, 56, 0.14);
+      cursor: pointer;
+      font: 600 12px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #anchor-theme-toggle:hover,
+    #anchor-theme-toggle:focus-visible {
+      border-color: #6366f1;
+      outline: 2px solid rgba(99, 102, 241, 0.35);
+      outline-offset: 2px;
+    }
+
+    #anchor-theme-toggle [data-theme-icon] {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    :root[data-anchor-theme='dark'] body,
+    :root[data-anchor-theme='dark'] #redoc,
+    :root[data-anchor-theme='dark'] #redoc .redoc-wrap {
+      background: #0d1117 !important;
+      color: #e6edf3 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc .menu-content,
+    :root[data-anchor-theme='dark'] #redoc [role='search'] {
+      background: #111923 !important;
+      color: #e6edf3 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc .search-input {
+      border-bottom-color: #34404c !important;
+      color: #e6edf3 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc .search-input::placeholder {
+      color: #8b949e !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc [role='menuitem'] {
+      color: #c9d1d9 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc [role='menuitem']:hover,
+    :root[data-anchor-theme='dark'] #redoc [role='menuitem'][aria-expanded='true'] {
+      background: #1f2a36 !important;
+      color: #ffffff !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc h1,
+    :root[data-anchor-theme='dark'] #redoc h2,
+    :root[data-anchor-theme='dark'] #redoc h3,
+    :root[data-anchor-theme='dark'] #redoc h4,
+    :root[data-anchor-theme='dark'] #redoc h5,
+    :root[data-anchor-theme='dark'] #redoc h6 {
+      color: #f0f6fc !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc p,
+    :root[data-anchor-theme='dark'] #redoc li,
+    :root[data-anchor-theme='dark'] #redoc td,
+    :root[data-anchor-theme='dark'] #redoc th,
+    :root[data-anchor-theme='dark'] #redoc label,
+    :root[data-anchor-theme='dark'] #redoc .property-name {
+      color: #c9d1d9 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc a,
+    :root[data-anchor-theme='dark'] #redoc a:visited {
+      color: #8ab4ff !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc a:hover {
+      color: #b6cfff !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc table tr {
+      background: #161b22 !important;
+      border-top-color: #30363d !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc table tr:nth-child(2n) {
+      background: #0d1117 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc table th,
+    :root[data-anchor-theme='dark'] #redoc table td {
+      border-color: #30363d !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc p code,
+    :root[data-anchor-theme='dark'] #redoc li code,
+    :root[data-anchor-theme='dark'] #redoc td code,
+    :root[data-anchor-theme='dark'] #redoc th code {
+      background: #21262d !important;
+      border-color: #30363d !important;
+      color: #ffb86c !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc .redoc-json,
+    :root[data-anchor-theme='dark'] #redoc pre {
+      background: #161b22 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc .redoc-json code,
+    :root[data-anchor-theme='dark'] #redoc pre code {
+      color: #e6edf3 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc button:not(#anchor-theme-toggle) {
+      color: #e6edf3;
+    }
+
+    :root[data-anchor-theme='dark'] #anchor-theme-toggle {
+      border-color: #465463;
+      background: rgba(22, 27, 34, 0.96);
+      color: #e6edf3;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    @media screen and (max-width: 75rem) {
+      #anchor-theme-toggle {
+        top: 10px;
+        right: 12px;
+      }
+    }
+
+    @media print {
+      #anchor-theme-toggle {
+        display: none !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <button id="anchor-theme-toggle" type="button" aria-pressed="false">
+    <span data-theme-icon aria-hidden="true">☾</span>
+    <span data-theme-label>Dark mode</span>
+  </button>
   
       <div id="redoc"><div class="sc-dwcwXc iABphV redoc-wrap"><div class="sc-eWvQxi lkswgW menu-content" style="top:0px;height:calc(100vh - 0px)"><div role="search" class="sc-kiYrpv heVKiz"><svg class="sc-iIEXPp eIwqum search-icon" version="1.1" viewBox="0 0 1000 1000" x="0px" xmlns="http://www.w3.org/2000/svg" y="0px"><path d="M968.2,849.4L667.3,549c83.9-136.5,66.7-317.4-51.7-435.6C477.1-25,252.5-25,113.9,113.4c-138.5,138.3-138.5,362.6,0,501C219.2,730.1,413.2,743,547.6,666.5l301.9,301.4c43.6,43.6,76.9,14.9,104.2-12.4C981,928.3,1011.8,893,968.2,849.4z M524.5,522c-88.9,88.7-233,88.7-321.8,0c-88.9-88.7-88.9-232.6,0-321.3c88.9-88.7,233-88.7,321.8,0C613.4,289.4,613.4,433.3,524.5,522z"></path></svg><input placeholder="Search..." aria-label="Search" type="text" class="sc-cKZGmI gyVKdy search-input" value=""/></div><div class="sc-kLgmGd bsUDpT scrollbar-container undefined"><ul role="menu" class="sc-ikPCzd eqhvhc"><li tabindex="0" depth="1" data-item-id="section/Known-drift-between-SQL-source-and-live-schema" role="menuitem" aria-label="Known drift between SQL source and live schema" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Known drift between SQL source and live schema" class="sc-eHfQNO dYJaHY">Known drift between SQL source and live schema</span></label></li><li tabindex="0" depth="1" data-item-id="tag/Challenges" role="menuitem" aria-label="Challenges" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Challenges" class="sc-eHfQNO dYJaHY">Challenges</span><svg class="sc-dQoBM cWjMmC" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg></label><ul class="sc-ikPCzd eGBeQN"><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/create_challenge" role="menuitem" aria-label="Create a challenge (create_challenge)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Create a challenge (create_challenge)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/get_my_challenges" role="menuitem" aria-label="List challenges the caller belongs to (get_my_challenges)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">List challenges the caller belongs to (get_my_challenges)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/close_challenge" role="menuitem" aria-label="Close a challenge (close_challenge)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Close a challenge (close_challenge)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/reopen_challenge" role="menuitem" aria-label="Reopen a closed challenge (reopen_challenge)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Reopen a closed challenge (reopen_challenge)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/update_challenge" role="menuitem" aria-label="Edit challenge settings (update_challenge)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Edit challenge settings (update_challenge)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/leave_challenge" role="menuitem" aria-label="Leave a challenge (leave_challenge)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Leave a challenge (leave_challenge)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/get_challenge_members_summary" role="menuitem" aria-label="List a challenge&#x27;s members (get_challenge_members_summary)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">List a challenge&#x27;s members (get_challenge_members_summary)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Challenges/operation/update_challenge_avatar_url" role="menuitem" aria-label="Update a challenge avatar URL (update_challenge_avatar_url)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Update a challenge avatar URL (update_challenge_avatar_url)</span></label></li></ul></li><li tabindex="0" depth="1" data-item-id="tag/Invites" role="menuitem" aria-label="Invites" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Invites" class="sc-eHfQNO dYJaHY">Invites</span><svg class="sc-dQoBM cWjMmC" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg></label><ul class="sc-ikPCzd eGBeQN"><li tabindex="0" depth="2" data-item-id="tag/Invites/operation/create_challenge_invite" role="menuitem" aria-label="Mint a one-time invite code (create_challenge_invite)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Mint a one-time invite code (create_challenge_invite)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Invites/operation/accept_challenge_invite" role="menuitem" aria-label="Redeem an invite code (accept_challenge_invite)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Redeem an invite code (accept_challenge_invite)</span></label></li></ul></li><li tabindex="0" depth="1" data-item-id="tag/Tasks" role="menuitem" aria-label="Tasks" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Tasks" class="sc-eHfQNO dYJaHY">Tasks</span><svg class="sc-dQoBM cWjMmC" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg></label><ul class="sc-ikPCzd eGBeQN"><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/get_today_tasks" role="menuitem" aria-label="Caller&#x27;s tasks for a given date (get_today_tasks)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Caller&#x27;s tasks for a given date (get_today_tasks)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/create_task_with_challenge_link" role="menuitem" aria-label="Create a task linked to a challenge (create_task_with_challenge_link)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Create a task linked to a challenge (create_task_with_challenge_link)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/update_task" role="menuitem" aria-label="Edit a task&#x27;s title/penalty (update_task)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Edit a task&#x27;s title/penalty (update_task)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/delete_task" role="menuitem" aria-label="Delete a task (delete_task)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Delete a task (delete_task)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/get_challenge_task_journal" role="menuitem" aria-label="Every member&#x27;s tasks for a challenge (get_challenge_task_journal)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Every member&#x27;s tasks for a challenge (get_challenge_task_journal)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/get_challenge_today_members" role="menuitem" aria-label="Members and their tasks for the current challenge day (get_challenge_today_members)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Members and their tasks for the current challenge day (get_challenge_today_members)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/get_previous_day_tasks" role="menuitem" aria-label="List pending tasks from the grace window (get_previous_day_tasks)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">List pending tasks from the grace window (get_previous_day_tasks)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/close_previous_day_tasks" role="menuitem" aria-label="Resolve tasks from the grace window (close_previous_day_tasks)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Resolve tasks from the grace window (close_previous_day_tasks)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tasks/operation/get_task_activity" role="menuitem" aria-label="Get daily task activity for the caller (get_task_activity)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Get daily task activity for the caller (get_task_activity)</span></label></li></ul></li><li tabindex="0" depth="1" data-item-id="tag/Balance" role="menuitem" aria-label="Balance" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Balance" class="sc-eHfQNO dYJaHY">Balance</span><svg class="sc-dQoBM cWjMmC" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg></label><ul class="sc-ikPCzd eGBeQN"><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/get_challenge_balance" role="menuitem" aria-label="Current balance for a challenge (get_challenge_balance)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Current balance for a challenge (get_challenge_balance)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/get_challenge_pending_total" role="menuitem" aria-label="Sum of pending (unconfirmed) penalties for a challenge (get_challenge_pending_total)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Sum of pending (unconfirmed) penalties for a challenge (get_challenge_pending_total)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/get_my_challenge_pending_total" role="menuitem" aria-label="Sum of the caller&#x27;s own pending penalties within one challenge (get_my_challenge_pending_total)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Sum of the caller&#x27;s own pending penalties within one challenge (get_my_challenge_pending_total)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/get_my_pending_total" role="menuitem" aria-label="Sum of the caller&#x27;s own pending penalties across all challenges (get_my_pending_total)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Sum of the caller&#x27;s own pending penalties across all challenges (get_my_pending_total)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/confirm_penalty_transaction" role="menuitem" aria-label="Confirm one of the caller&#x27;s own pending penalties (confirm_penalty_transaction)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Confirm one of the caller&#x27;s own pending penalties (confirm_penalty_transaction)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/confirm_my_pending" role="menuitem" aria-label="Confirm part of the caller&#x27;s pending penalties for a challenge (confirm_my_pending)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Confirm part of the caller&#x27;s pending penalties for a challenge (confirm_my_pending)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/get_challenge_member_balances" role="menuitem" aria-label="Per-member confirmed + pending totals for a challenge (get_challenge_member_balances)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Per-member confirmed + pending totals for a challenge (get_challenge_member_balances)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Balance/operation/withdraw_from_balance" role="menuitem" aria-label="Spend from the challenge balance (withdraw_from_balance)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Spend from the challenge balance (withdraw_from_balance)</span></label></li></ul></li><li tabindex="0" depth="1" data-item-id="tag/Auth" role="menuitem" aria-label="Auth" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Auth" class="sc-eHfQNO dYJaHY">Auth</span><svg class="sc-dQoBM cWjMmC" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg></label><ul class="sc-ikPCzd eGBeQN"><li tabindex="0" depth="2" data-item-id="tag/Auth/operation/authSignUp" role="menuitem" aria-label="Register a new account" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Register a new account</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Auth/operation/authToken" role="menuitem" aria-label="Sign in with password, or refresh a session" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Sign in with password, or refresh a session</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Auth/operation/authLogout" role="menuitem" aria-label="Sign out (revoke the current session)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Sign out (revoke the current session)</span></label></li></ul></li><li tabindex="0" depth="1" data-item-id="tag/Profile" role="menuitem" aria-label="Profile" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Profile" class="sc-eHfQNO dYJaHY">Profile</span><svg class="sc-dQoBM cWjMmC" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg></label><ul class="sc-ikPCzd eGBeQN"><li tabindex="0" depth="2" data-item-id="tag/Profile/operation/update_user_settings" role="menuitem" aria-label="Update the caller&#x27;s profile settings (update_user_settings)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Update the caller&#x27;s profile settings (update_user_settings)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Profile/operation/update_display_name" role="menuitem" aria-label="Update the caller&#x27;s display name (update_display_name)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Update the caller&#x27;s display name (update_display_name)</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Profile/operation/update_avatar_url" role="menuitem" aria-label="Update the caller&#x27;s avatar URL (update_avatar_url)" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="post" class="sc-XhXdA kdqpyX operation-type post">post</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Update the caller&#x27;s avatar URL (update_avatar_url)</span></label></li></ul></li><li tabindex="0" depth="1" data-item-id="tag/Tables" role="menuitem" aria-label="Tables" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP kYHuni -depth1"><span width="calc(100% - 38px)" title="Tables" class="sc-eHfQNO dYJaHY">Tables</span><svg class="sc-dQoBM cWjMmC" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg></label><ul class="sc-ikPCzd eGBeQN"><li tabindex="0" depth="2" data-item-id="tag/Tables/operation/getChallengeFields" role="menuitem" aria-label="Read challenge fields directly" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="get" class="sc-XhXdA kdqpyX operation-type get">get</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Read challenge fields directly</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tables/operation/listRecentTaskTitles" role="menuitem" aria-label="Read task fields directly" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="get" class="sc-XhXdA kdqpyX operation-type get">get</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Read task fields directly</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tables/operation/updateTaskStatus" role="menuitem" aria-label="Mark a task done/pending directly" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="patch" class="sc-XhXdA kdqpyX operation-type patch">patch</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Mark a task done/pending directly</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tables/operation/listBalanceTransactions" role="menuitem" aria-label="Read the full transaction ledger for a challenge" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="get" class="sc-XhXdA kdqpyX operation-type get">get</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Read the full transaction ledger for a challenge</span></label></li><li tabindex="0" depth="2" data-item-id="tag/Tables/operation/getUserFields" role="menuitem" aria-label="Read the caller&#x27;s own default penalty" aria-expanded="false" class="sc-tYrig hNMAOR"><label class="sc-biBsFP ehmZgs -depth2"><span type="get" class="sc-XhXdA kdqpyX operation-type get">get</span><span tabindex="0" width="calc(100% - 38px)" class="sc-eHfQNO dYJaHY">Read the caller&#x27;s own default penalty</span></label></li></ul></li></ul><div class="sc-hzMLOJ icnaqS"><a target="_blank" rel="noopener noreferrer" href="https://redocly.com/redoc/">API docs by Redocly</a></div></div></div><div class="sc-kUbhZP fsqnbI"><div class="sc-irlPNa iDYPDd"><svg class="" style="transform:translate(2px, -4px) rotate(180deg);transition:transform 0.2s ease" viewBox="0 0 926.23699 573.74994" version="1.1" x="0px" y="0px" width="15" height="15"><g transform="translate(904.92214,-879.1482)"><path d="
           m -673.67664,1221.6502 -231.2455,-231.24803 55.6165,
@@ -912,6 +1089,62 @@ members, and further to <code>date &gt;= caller&#39;s own joined_at</code>.</p>
       Redoc.hydrate(__redoc_state, container);
 
       </script>
+<script id="anchor-theme-script">
+    (() => {
+      const storageKey = 'anchor-theme';
+      const root = document.documentElement;
+      const button = document.getElementById('anchor-theme-toggle');
+      const label = button?.querySelector('[data-theme-label]');
+      const icon = button?.querySelector('[data-theme-icon]');
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+
+      if (!button || !label || !icon) return;
+
+      const storedTheme = () => {
+        try {
+          const value = window.localStorage.getItem(storageKey);
+          return value === 'light' || value === 'dark' ? value : null;
+        } catch {
+          return null;
+        }
+      };
+
+      const render = (theme) => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        root.dataset.anchorTheme = theme;
+        button.setAttribute('aria-pressed', String(theme === 'dark'));
+        button.setAttribute('aria-label', `Switch to ${nextTheme} mode`);
+        label.textContent = `${nextTheme[0].toUpperCase()}${nextTheme.slice(1)} mode`;
+        icon.textContent = theme === 'dark' ? '☀' : '☾';
+      };
+
+      const setTheme = (theme, persist) => {
+        render(theme);
+        if (persist) {
+          try {
+            window.localStorage.setItem(storageKey, theme);
+          } catch {
+            // The theme still applies for this page even if persistence is unavailable.
+          }
+        }
+      };
+
+      render(root.dataset.anchorTheme || (media.matches ? 'dark' : 'light'));
+      button.addEventListener('click', () => {
+        setTheme(root.dataset.anchorTheme === 'dark' ? 'light' : 'dark', true);
+      });
+
+      const followSystemPreference = () => {
+        if (!storedTheme()) setTheme(media.matches ? 'dark' : 'light', false);
+      };
+
+      if (typeof media.addEventListener === 'function') {
+        media.addEventListener('change', followSystemPreference);
+      } else {
+        media.addListener(followSystemPreference);
+      }
+    })();
+  </script>
 </body>
 
 </html>

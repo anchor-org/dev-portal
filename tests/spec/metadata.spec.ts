@@ -92,4 +92,10 @@ describe('generated site (index.html)', () => {
   it.skipIf(!exists)('title matches spec info.title', () => {
     expect(html).toContain(spec.info.title);
   });
+
+  it.skipIf(!exists)('includes the generated light/dark theme controls', () => {
+    expect(html).toContain('id="anchor-theme-styles"');
+    expect(html).toContain('id="anchor-theme-toggle"');
+    expect(html).toContain('id="anchor-theme-script"');
+  });
 });

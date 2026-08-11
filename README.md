@@ -7,6 +7,7 @@ Internal API documentation for the Anchor project. This is where OpenAPI specs f
 - `docs/openapi.yaml` — the Anchor API spec (Supabase PostgREST: RPC + table endpoints). Source of truth.
 - `index.html` — the static docs site (Redoc), automatically rebuilt from `docs/openapi.yaml` whenever a PR touching it merges into `main` (see `.github/workflows/build-docs.yml` — it opens its own PR with the rebuilt file, since direct pushes to `main` are blocked). **Do not edit by hand** — changes will be overwritten.
 - `favicon.png` — Anchor's actual app icon (copied from `anchor/assets/icon.png`), injected into `index.html`'s `<head>` by `scripts/inject-favicon.mjs` as part of `npm run build`.
+- `scripts/inject-theme.mjs` — adds the static site's system-aware light/dark theme and persisted theme toggle during the build. **Do not edit `index.html` by hand** — rebuild it instead.
 - `tests/` — unit + integration tests for the spec, one folder per API domain/tag (see Testing below).
 
 ## Local preview
@@ -15,7 +16,7 @@ Internal API documentation for the Anchor project. This is where OpenAPI specs f
 npx @redocly/cli preview-docs docs/openapi.yaml
 ```
 
-(Live-reload preview straight from the spec — doesn't go through `npm run build`, so no favicon here. For the actual static site, build it — see Testing below.)
+(Live-reload preview straight from the spec — doesn't go through `npm run build`, so it has neither the favicon nor the theme toggle. For the actual static site, build it — see Testing below.)
 
 ## Adding docs for a new API
 

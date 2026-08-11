@@ -6,6 +6,8 @@ on:
     paths:
       - "docs/**.yaml"
       - "docs/**.yml"
+      - "package.json"
+      - "scripts/**"
   workflow_dispatch: {}
 
 permissions:
