@@ -76,6 +76,8 @@ tags:
     description: Penalty/withdrawal ledger per challenge (balance_transactions)
   - name: Auth
     description: Supabase GoTrue — sign up, sign in, sign out. Different base path from everything else (`/auth/v1`, not `/rest/v1`).
+  - name: Profile
+    description: Caller profile and preferences
   - name: Tables
     description: Direct PostgREST table access used by the client instead of an RPC
 
@@ -104,6 +106,9 @@ paths:
                 p_currency: { type: string, example: UAH }
                 p_default_penalty: { type: number, nullable: true, default: null }
                 p_payment_confirmation: { type: boolean, default: false }
+                p_day_close_hour: { type: integer, minimum: 0, maximum: 23, default: 23 }
+                p_day_close_date_offset: { type: integer, enum: [0, 1], default: 0 }
+                p_grace_days: { type: integer, minimum: 0, maximum: 3, default: 1 }
       responses:
         "200":
           description: The created challenge row
@@ -143,7 +148,7 @@ paths:
       operationId: close_challenge
       tags: [Challenges]
       summary: Close a challenge (close_challenge)
-      description: Owner-only. Sets `status = 'done'`.
+      description: Owner-only. Sets `status = 'done'`; optionally settles all members' pending debt before closing.
       requestBody:
         required: true
         content:
@@ -153,6 +158,7 @@ paths:
               required: [p_challenge_id]
               properties:
                 p_challenge_id: { type: string, format: uuid }
+                p_settle_all: { type: boolean, default: false }
       responses:
         "204": { description: Closed }
         "401": { description: not_authenticated }
@@ -185,19 +191,22 @@ paths:
       summary: Edit challenge settings (update_challenge)
       description: |
         Owner-only. Deliberately excludes `payment_confirmation` (locked
-        after creation) and `day_close_hour` (column doesn't exist yet).
+        after creation).
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [p_challenge_id, p_title, p_currency, p_default_penalty]
+              required: [p_challenge_id, p_title, p_currency, p_default_penalty, p_day_close_hour, p_day_close_date_offset, p_grace_days]
               properties:
                 p_challenge_id: { type: string, format: uuid }
                 p_title: { type: string }
                 p_currency: { type: string }
                 p_default_penalty: { type: number, nullable: true }
+                p_day_close_hour: { type: integer, minimum: 0, maximum: 23 }
+                p_day_close_date_offset: { type: integer, enum: [0, 1] }
+                p_grace_days: { type: integer, minimum: 0, maximum: 3 }
       responses:
         "204": { description: Updated }
         "400": { description: invalid_title }
@@ -250,7 +259,29 @@ paths:
                   properties:
                     user_id: { type: string, format: uuid }
                     display_name: { type: string }
+                    avatar_url: { type: string, nullable: true }
                     role: { type: string, enum: [owner, member] }
+
+  /rpc/update_challenge_avatar_url:
+    post:
+      operationId: update_challenge_avatar_url
+      tags: [Challenges]
+      summary: Update a challenge avatar URL (update_challenge_avatar_url)
+      description: Owner-only. Stores the public URL after the client uploads the image to the `challenge-avatars` bucket.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id, p_avatar_url]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+                p_avatar_url: { type: string, format: uri }
+      responses:
+        "204": { description: Updated }
+        "401": { description: not_authenticated }
+        "404": { description: not_authorized_or_not_found }
 
   # ============================================================
   # RPC — Invites
@@ -441,6 +472,119 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/JournalEntry" }
 
+  /rpc/get_challenge_today_members:
+    post:
+      operationId: get_challenge_today_members
+      tags: [Tasks]
+      summary: Members and their tasks for the current challenge day (get_challenge_today_members)
+      description: Returns one row per member/task combination, including a taskless row for members with no task today.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Challenge members and their current-day tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id: { type: string, format: uuid }
+                    display_name: { type: string }
+                    avatar_url: { type: string, nullable: true }
+                    task_id: { type: string, format: uuid, nullable: true }
+                    title: { type: string, nullable: true }
+                    penalty_amount: { type: number, nullable: true }
+                    status: { type: string, enum: [pending, done, missed], nullable: true }
+                    completed_at: { type: string, format: date-time, nullable: true }
+
+  /rpc/get_previous_day_tasks:
+    post:
+      operationId: get_previous_day_tasks
+      tags: [Tasks]
+      summary: List pending tasks from the grace window (get_previous_day_tasks)
+      description: Returns the caller's pending tasks whose scheduled day is before the challenge's current open day.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object, properties: {} }
+      responses:
+        "200":
+          description: Pending tasks in the grace window
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string, format: uuid }
+                    title: { type: string }
+                    penalty_amount: { type: number }
+                    scheduled_date: { type: string, format: date }
+                    challenge_id: { type: string, format: uuid }
+                    challenge_title: { type: string }
+
+  /rpc/close_previous_day_tasks:
+    post:
+      operationId: close_previous_day_tasks
+      tags: [Tasks]
+      summary: Resolve tasks from the grace window (close_previous_day_tasks)
+      description: Marks selected pending tasks done and the remaining pending tasks in the same challenge missed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_challenge_id, p_done_task_ids]
+              properties:
+                p_challenge_id: { type: string, format: uuid }
+                p_done_task_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "204": { description: Previous-day tasks resolved }
+        "401": { description: not_authenticated }
+        "404": { description: challenge_not_found_or_inactive }
+
+  /rpc/get_task_activity:
+    post:
+      operationId: get_task_activity
+      tags: [Tasks]
+      summary: Get daily task activity for the caller (get_task_activity)
+      description: Returns task totals and completed totals for the requested number of recent days.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                p_days: { type: integer, minimum: 1, default: 140 }
+      responses:
+        "200":
+          description: Daily task activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    activity_date: { type: string, format: date }
+                    tasks_total: { type: integer }
+                    tasks_done: { type: integer }
+
   # ============================================================
   # RPC — Balance
   # ============================================================
@@ -553,17 +697,18 @@ paths:
     post:
       operationId: confirm_my_pending
       tags: [Balance]
-      summary: Bulk-confirm all of the caller's own pending penalties for a challenge (confirm_my_pending)
-      description: No-op (not an error) if nothing is pending.
+      summary: Confirm part of the caller's pending penalties for a challenge (confirm_my_pending)
+      description: Records the requested payment amount; no-op (not an error) if nothing is pending.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [p_challenge_id]
+              required: [p_challenge_id, p_amount]
               properties:
                 p_challenge_id: { type: string, format: uuid }
+                p_amount: { type: number, minimum: 0, exclusiveMinimum: true }
       responses:
         "204": { description: Confirmed (or no-op) }
         "401": { description: not_authenticated }
@@ -619,6 +764,69 @@ paths:
         "401": { description: not_authenticated }
         "403": { description: not_authorized }
         "400": { description: invalid_amount }
+
+  # ============================================================
+  # RPC — Profile
+  # ============================================================
+  /rpc/update_user_settings:
+    post:
+      operationId: update_user_settings
+      tags: [Profile]
+      summary: Update the caller's profile settings (update_user_settings)
+      description: Updates the caller's theme, locale, and currency preferences.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_theme, p_locale, p_currency]
+              properties:
+                p_theme: { type: string, enum: [light, dark, system] }
+                p_locale: { type: string }
+                p_currency: { type: string }
+      responses:
+        "204": { description: Updated }
+        "401": { description: not_authenticated }
+
+  /rpc/update_display_name:
+    post:
+      operationId: update_display_name
+      tags: [Profile]
+      summary: Update the caller's display name (update_display_name)
+      description: Trims and stores a non-empty display name for the authenticated caller.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_display_name]
+              properties:
+                p_display_name: { type: string }
+      responses:
+        "204": { description: Updated }
+        "401": { description: not_authenticated }
+        "400": { description: display_name_cannot_be_empty }
+
+  /rpc/update_avatar_url:
+    post:
+      operationId: update_avatar_url
+      tags: [Profile]
+      summary: Update the caller's avatar URL (update_avatar_url)
+      description: Stores the public URL after the client uploads the image to the `avatars` bucket.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_avatar_url]
+              properties:
+                p_avatar_url: { type: string, format: uri }
+      responses:
+        "204": { description: Updated }
+        "401": { description: not_authenticated }
 
   # ============================================================
   # Auth — Supabase GoTrue (base path is /auth/v1, not /rest/v1 —
@@ -932,6 +1140,7 @@ components:
         default_penalty: { type: number, nullable: true }
         member_count: { type: integer }
         status: { type: string, enum: [active, done] }
+        avatar_url: { type: string, nullable: true }
 
     Task:
       type: object

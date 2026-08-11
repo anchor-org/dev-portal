@@ -24,8 +24,11 @@ export const sqlFnNames = new Set(
 export const rpcCallsInClient = new Set(
   [...clientText.matchAll(/supabase\.rpc\(\s*'([a-zA-Z_]+)'/g)].map((m) => m[1])
 );
+
+// Storage buckets also expose a `.from()` method, but they are not PostgREST
+// tables and must not be compared with the spec's `Tables` operations.
 export const tableCallsInClient = new Set(
-  [...clientText.matchAll(/\.from\(\s*'([a-zA-Z_]+)'\s*\)/g)].map((m) => m[1])
+  [...clientText.matchAll(/supabase\s*\.from\(\s*'([a-zA-Z_]+)'\s*\)/g)].map((m) => m[1])
 );
 
 export { ANCHOR_REPO_PATH, anchorRepoExists };
