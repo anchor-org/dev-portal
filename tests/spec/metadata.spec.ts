@@ -97,5 +97,6 @@ describe('generated site (index.html)', () => {
     expect(html).toContain('id="anchor-theme-styles"');
     expect(html).toContain('id="anchor-theme-toggle"');
     expect(html).toContain('id="anchor-theme-script"');
+    expect(html).toContain('.redoc-wrap > div:nth-child(2)');
   });
 });
