@@ -171,6 +171,29 @@ const THEME_STYLES = `<style id="anchor-theme-styles">
       color: #e6edf3;
     }
 
+    :root[data-anchor-theme='dark'] #redoc [role='tab'] {
+      border-color: #465463 !important;
+      background: #161b22 !important;
+      color: #c9d1d9 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc [role='tab'][aria-selected='true'] {
+      border-color: #4f6f94 !important;
+      background: #263b52 !important;
+      color: #f0f6fc !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc [role='tab'].tab-success[aria-selected='true'] {
+      border-color: #2f8154 !important;
+      background: #163d2b !important;
+      color: #d7fbe8 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc [role='tab']:focus-visible {
+      outline: 2px solid #8ab4ff !important;
+      outline-offset: 2px;
+    }
+
     /* Redoc's mobile scroll control is a fixed sibling of .api-content. */
     :root[data-anchor-theme='dark'] #redoc .redoc-wrap > div:nth-child(2) {
       background: #161b22 !important;
