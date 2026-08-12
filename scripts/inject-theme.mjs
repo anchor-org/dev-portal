@@ -74,6 +74,20 @@ const THEME_STYLES = `<style id="anchor-theme-styles">
       color: #e6edf3 !important;
     }
 
+    :root[data-anchor-theme='dark'] #redoc .menu-content label,
+    :root[data-anchor-theme='dark'] #redoc .menu-content > div:nth-child(2) > div:nth-child(2) {
+      background: #111923 !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc .menu-content > div:nth-child(2) > div:nth-child(2) a {
+      color: #8b949e !important;
+    }
+
+    :root[data-anchor-theme='dark'] #redoc .menu-content label:hover,
+    :root[data-anchor-theme='dark'] #redoc .menu-content label:focus-within {
+      background: #1f2a36 !important;
+    }
+
     :root[data-anchor-theme='dark'] #redoc .search-input {
       border-bottom-color: #34404c !important;
       color: #e6edf3 !important;
