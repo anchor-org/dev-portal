@@ -1213,14 +1213,62 @@ components:
 
     AuthUser:
       type: object
+      description: |
+        Verified 2026-08-17 against live `password` and `refresh_token`
+        responses — the previous version of this schema only had `id`,
+        `email`, `user_metadata.display_name`, and `created_at`. Every
+        other field below is also actually returned; this is GoTrue's
+        standard user object, not an Anchor-specific shape.
       properties:
         id: { type: string, format: uuid }
+        aud: { type: string, example: authenticated }
+        role: { type: string, example: authenticated }
         email: { type: string, format: email }
-        user_metadata:
+        email_confirmed_at: { type: string, format: date-time, nullable: true }
+        phone: { type: string, description: Empty string when not set — phone auth isn't used by this app }
+        confirmed_at: { type: string, format: date-time, nullable: true }
+        last_sign_in_at: { type: string, format: date-time }
+        app_metadata:
           type: object
           properties:
+            provider: { type: string, example: email }
+            providers: { type: array, items: { type: string }, example: [email] }
+        user_metadata:
+          type: object
+          description: Same payload duplicated per-identity under identities[].identity_data.
+          properties:
             display_name: { type: string }
+            email: { type: string, format: email }
+            email_verified: { type: boolean }
+            phone_verified: { type: boolean }
+            sub: { type: string, format: uuid, description: Same value as the top-level id }
+        identities:
+          type: array
+          items: { $ref: "#/components/schemas/AuthIdentity" }
         created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        is_anonymous: { type: boolean }
+
+    AuthIdentity:
+      type: object
+      properties:
+        identity_id: { type: string, format: uuid }
+        id: { type: string, format: uuid, description: Same value as user_id for the email provider }
+        user_id: { type: string, format: uuid }
+        identity_data:
+          type: object
+          description: Mirrors the parent user_metadata at the time this identity was created/last updated.
+          properties:
+            display_name: { type: string }
+            email: { type: string, format: email }
+            email_verified: { type: boolean }
+            phone_verified: { type: boolean }
+            sub: { type: string, format: uuid }
+        provider: { type: string, example: email }
+        last_sign_in_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        email: { type: string, format: email }
 
     AuthSession:
       type: object
@@ -1231,3 +1279,13 @@ components:
         expires_in: { type: integer, description: Seconds until access_token expires }
         expires_at: { type: integer, description: Unix timestamp }
         user: { $ref: "#/components/schemas/AuthUser" }
+        weak_password:
+          type: object
+          nullable: true
+          description: |
+            Only present when grant_type=password — absent entirely (not
+            just null) from the grant_type=refresh_token response, since
+            the weak-password check runs at password verification, which
+            a token refresh never does. Populated shape not verified —
+            null on every live call made so far (no known-weak test
+            password on hand).
